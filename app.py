@@ -98,6 +98,13 @@ def download():
     url = request.form['url']
     format_type = request.form['format']
     try:
+        # 檢查使用者是否有上傳 cookies.txt
+        cookiefile = None
+        if 'cookiefile' in request.files and request.files['cookiefile'].filename:
+            user_cookie = request.files['cookiefile']
+            cookiefile = f"downloads/user_{int(time.time())}_cookies.txt"
+            user_cookie.save(cookiefile)
+
         if format_type == 'mp3':
             quality = request.form.get('quality_mp3', '192')
             output_ext = 'mp3'
@@ -114,6 +121,8 @@ def download():
                     'preferredquality': quality,
                 }],
             }
+            if cookiefile:
+                ydl_opts['cookiefile'] = cookiefile
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 title = info.get('title', 'download')
@@ -143,6 +152,8 @@ def download():
                 'merge_output_format': 'mp4',
                 'cookiefile': 'cookies.txt',
             }
+            if cookiefile:
+                ydl_opts['cookiefile'] = cookiefile
             print(f"yt-dlp 參數: {ydl_opts}")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
@@ -171,6 +182,9 @@ def download():
 
         response = send_file(filename, as_attachment=True, download_name=f"{safe_title}.{output_ext}")
         Timer(3, delayed_remove, args=(filename,)).start()
+        # 刪除暫存 cookies.txt
+        if cookiefile and os.path.exists(cookiefile):
+            os.remove(cookiefile)
         return response
     except Exception as e:
         err_msg = str(e)

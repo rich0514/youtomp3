@@ -65,7 +65,7 @@
         </div>
         <div class="right">
             <h1>YouTube 下載器</h1>
-            <form method="post" action="/download" enctype="application/x-www-form-urlencoded">
+            <form method="post" action="/download" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="url">YouTube 連結：</label>
                     <input type="text" id="url" name="url" required>
@@ -92,6 +92,10 @@
                         <option value="720">720p</option>
                         <option value="1080">1080p</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="cookiefile">（選用）上傳你的 YouTube cookies.txt：</label>
+                    <input type="file" id="cookiefile" name="cookiefile" accept=".txt">
                 </div>
                 <button class="btn" type="submit">下載</button>
             </form>
