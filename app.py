@@ -173,8 +173,16 @@ def download():
         Timer(3, delayed_remove, args=(filename,)).start()
         return response
     except Exception as e:
+        err_msg = str(e)
+        if "Sign in to confirm you’re not a bot" in err_msg or "cookies" in err_msg:
+            flash("此影片需要登入 YouTube 或驗證身分，無法直接下載。請改用其他下載方式，或自行登入 YouTube 後再嘗試。")
+        elif "This video is age-restricted" in err_msg or "age" in err_msg:
+            flash("此影片有年齡限制，無法直接下載。")
+        elif "This video is private" in err_msg or "private" in err_msg:
+            flash("此影片為私人影片，無法下載。")
+        else:
+            flash(f"下載失敗：{e}")
         logging.error(f"下載失敗：{e}")
-        flash(f"下載失敗：{e}")
         return redirect(url_for('index'))
 
 if __name__ == "__main__":
