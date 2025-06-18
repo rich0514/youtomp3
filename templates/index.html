@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube 下載器</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; }
+        .container { display: flex; height: 100vh; }
+        .left, .right { padding: 40px; }
+        .left { width: 40%; background: #222; color: #fff; }
+        .right { width: 60%; background: #fff; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; }
+        input[type="text"], select { width: 100%; padding: 8px; }
+        .btn { padding: 10px 20px; background: #007bff; color: #fff; border: none; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .status { margin-top: 30px; }
+        /* 進度條樣式 */
+        .progress-container {
+          width: 100%;
+          background: #e0e0e0;
+          border-radius: 4px;
+          overflow: hidden;
+          display: none; /* 預設隱藏 */
+        }
+        .progress-bar {
+          height: 8px;
+          background: #76c7c0;
+          width: 0%;
+        }
+    </style>
+    <script>
+        function toggleQuality() {
+            const mp3Quality = document.getElementById('mp3-quality');
+            const mp4Quality = document.getElementById('mp4-quality');
+            if (document.getElementById('mp3').checked) {
+                mp3Quality.style.display = 'block';
+                mp4Quality.style.display = 'none';
+            } else {
+                mp3Quality.style.display = 'none';
+                mp4Quality.style.display = 'block';
+            }
+        }
+        window.onload = toggleQuality;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="left">
+            <h2>處理狀態</h2>
+            <div class="status" id="status">
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                    {% for message in messages %}
+                      <div style="color:yellow;">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- 進度條容器 -->
+            <div class="progress-container" id="progress-container">
+              <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+        <div class="right">
+            <h1>YouTube 下載器</h1>
+            <form method="post" action="/download" enctype="application/x-www-form-urlencoded">
+                <div class="form-group">
+                    <label for="url">YouTube 連結：</label>
+                    <input type="text" id="url" name="url" required>
+                </div>
+                <div class="form-group">
+                    <label>格式：</label>
+                    <input type="radio" id="mp3" name="format" value="mp3" checked onclick="toggleQuality()">
+                    <label for="mp3">MP3</label>
+                    <input type="radio" id="mp4" name="format" value="mp4" onclick="toggleQuality()">
+                    <label for="mp4">MP4</label>
+                </div>
+                <div class="form-group" id="mp3-quality">
+                    <label for="quality_mp3"><b>MP3 品質：</b></label>
+                    <select id="quality_mp3" name="quality_mp3">
+                        <option value="192">192 kbps</option>
+                        <option value="256">256 kbps</option>
+                        <option value="320">320 kbps</option>
+                    </select>
+                </div>
+                <div class="form-group" id="mp4-quality" style="display:none;">
+                    <label for="quality_mp4"><b>MP4 品質：</b></label>
+                    <select id="quality_mp4" name="quality_mp4">
+                        <option value="480">480p</option>
+                        <option value="720">720p</option>
+                        <option value="1080">1080p</option>
+                    </select>
+                </div>
+                <button class="btn" type="submit">下載</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+      // 假設的進度模擬函數
+      function simulateProgress() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        let width = 0;
+        progressContainer.style.display = 'block'; // 顯示進度條容器
+        const interval = setInterval(() => {
+          if (width >= 100) {
+            clearInterval(interval);
+          } else {
+            width++;
+            progressBar.style.width = width + '%';
+          }
+        }, 100); // 每 100ms 增加 1%
+      }
+
+      // 表單提交事件
+      document.getElementById('download-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // 防止表單默認提交
+
+        // 在這裡可以添加表單驗證邏輯
+
+        // 模擬進度
+        simulateProgress();
+
+        // 這裡可以添加實際的表單提交邏輯，例如使用 Fetch API 發送 POST 請求
+      });
+    </script>
+</body>
+</html>
+</html>
