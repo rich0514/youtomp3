@@ -141,6 +141,7 @@ def download():
                 'quiet': False,
                 'no_warnings': False,
                 'merge_output_format': 'mp4',
+                'cookiefile': 'cookies.txt',
             }
             print(f"yt-dlp 參數: {ydl_opts}")
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
