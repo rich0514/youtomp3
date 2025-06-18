@@ -5,6 +5,7 @@ import yt_dlp
 from flask import Flask, request, render_template, send_file, flash, redirect, url_for, after_this_request
 import logging
 from threading import Timer
+import time
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", str(uuid.uuid4()))
@@ -194,6 +195,8 @@ def download():
             flash("此影片有年齡限制，無法直接下載。")
         elif "This video is private" in err_msg or "private" in err_msg:
             flash("此影片為私人影片，無法下載。")
+        elif "This video is unavailable" in err_msg or "unavailable" in err_msg:
+            flash("此影片無法取得，可能已被移除或設為不公開。")
         else:
             flash(f"下載失敗：{e}")
         logging.error(f"下載失敗：{e}")
