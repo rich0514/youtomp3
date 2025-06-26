@@ -2,16 +2,25 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <!-- 新增 viewport meta 標籤 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube 下載器</title>
     <style>
-        body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; background: #f5f6fa; }
+        body { 
+            font-family: "Segoe UI", Arial, sans-serif; 
+            margin: 0; 
+            background: #f8f5ed; /* ← 米白色底色 */
+        }
         .container { 
-            max-width: 600px; /* 原900px縮小為600px */
-            margin: 40px auto; 
-            background: #fff; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 16px #0001; 
-            padding: 32px 24px; /* padding縮小 */
+            max-width: 600px;
+            min-width: 320px;
+            margin: 60px auto;  /* ← 只會影響中間主卡片本身的位置 */
+            background: #fff;
+            border-radius: 24px; 
+            /* 右下方陰影：光線從左側照過來，陰影偏右下 */
+            box-shadow: 12px 16px 36px 0 #d2c7b6, 4px 8px 16px 0 #0001;
+            border: 1.5px solid #e6dac2;
+            padding: 32px 24px;
         }
         h1 { color: #2d3a4b; margin-bottom: 10px; text-align: center; }
         .notice, .warning, .disclaimer {
@@ -66,8 +75,167 @@
             align-items: center;
             margin-right: 16px;
         }
+        /* 
+         .main-flex 控制整個主區塊（左右廣告+中間內容）的排列與間距
+         gap 控制左右小卡與中間內容的間距
+        */
+        .main-flex {
+            display: flex;
+            flex-direction: row;
+            justify-content: center; /* ← 讓三欄（左/中/右）在整個 main-flex 中置中排列 */
+            gap: 300px;
+            padding-left: 60px;
+            padding-right: 60px;
+            /* 不要在這裡設定 align-items，讓子元素自己決定對齊 */
+        }
+        /*
+         .ad-side 控制左右廣告小卡區塊
+         可用 margin-left/right 控制小卡離頁面邊界的距離
+        */
+        .ad-side {
+            width: 320px;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            /* 讓左右小卡與中央主卡片齊頭（與中間 .container 對齊） */
+            margin-top: 0; /* 先歸零 */
+        }
+        .ad-side.left {
+            margin-top: 60px;   /* ← 這裡也要同步調整，左右小卡才會與中間主卡片齊頭 */
+        }
+        .ad-side.right {
+            margin-top: 60px;   /* ← 同上 */
+        }
+        .ad-card {
+            /* 小卡本體大小（桌機版） */
+            background: #fdfaf5;
+            border-radius: 18px;
+            /* 小卡陰影（這裡調整小卡的陰影深淺） */
+            box-shadow: 0 2px 12px 0 #0002;
+            border: 1px solid #e6e6e6;
+            padding: 16px 8px 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 240px;    /* ← 小卡最小高度（桌機） */
+            height: 240px;        /* ← 小卡固定高度 */
+            width: 240px;         /* ← 小卡固定寬度 */
+            max-width: 300px;     /* ← 小卡最大寬度 */
+            margin: 0 auto;
+            transition: box-shadow 0.2s, transform 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .ad-card img {
+            /* 小卡內圖片大小（桌機版） */
+            width: 240px;
+            height: 220px; /* ← 圖片高度與小卡高度一樣，會把下方小點擠出卡片外 */
+            object-fit: cover;
+            border-radius: 12px;
+            margin: 0 0 8px 0;
+            box-shadow: 0 1px 6px #0001;
+            background: #f5f5f5;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .ad-card:hover {
+            /* 小卡 hover 陰影（這裡調整小卡滑過時的陰影深淺） */
+            box-shadow: 0 6px 24px 0 #1890ff33, 0 1.5px 8px #0001;
+            transform: translateY(-2px) scale(1.03);
+        }
+        .ad-card img:hover {
+            box-shadow: 0 0 12px #1890ff55;
+            transform: scale(1.05);
+        }
+        .ad-card-indicators {
+            display: flex;
+            justify-content: center;
+            margin-top: 2px;
+        }
+        .ad-card-indicator {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            margin: 0 2px;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .ad-card-indicator.active {
+            background: #1890ff;
+        }
+        /* 左側小卡 */
+        .ad-card.left-1 { /* 左1-1/1-2 可在這裡調整 */ }
+        .ad-card.left-2 { /* 左2-1/2-2 可在這裡調整 */ }
+        .ad-card.left-3 { /* 左3-1/3-2 可在這裡調整 */ }
+        /* 右側小卡 */
+        .ad-card.right-1 { /* 右1-1/1-2 可在這裡調整 */ }
+        .ad-card.right-2 { /* 右2-1/2-2 可在這裡調整 */ }
+        .ad-card.right-3 { /* 右3-1/3-2 可在這裡調整 */ }
+        @media (max-width: 900px) {
+            .main-flex { flex-direction: column; align-items: center; }
+            .ad-side { 
+                flex-direction: row; 
+                width: 100%;         /* ← 這裡會讓小卡區塊在平板/小螢幕時橫向排列並佔滿寬度 */
+                justify-content: center; 
+            }
+            .ad-card { 
+                min-width: 80px; 
+                max-width: 120px;    /* ← 小卡最大寬度（平板/小螢幕） */
+            }
+        }
+        /* 新增：手機版自動調整（小於600px） */
         @media (max-width: 600px) {
-            .container { padding: 16px 4vw; }
+            .main-flex {
+                flex-direction: column;
+                padding-left: 4px;
+                padding-right: 4px;
+                gap: 0;
+            }
+            .ad-side {
+                flex-direction: row;
+                width: 100%;         /* ← 這裡會讓小卡區塊在手機時橫向排列並佔滿寬度 */
+                justify-content: center;
+                align-items: flex-start;
+                gap: 8px;
+                margin: 0;
+                min-width: 0;
+            }
+            .ad-card {
+                /* 小卡本體大小（手機版） */
+                background: #fdfaf5; /* ← 小卡米白色，手機也一致 */
+                min-width: 0;
+                max-width: 120px;    /* ← 小卡最大寬度（手機） */
+                width: 90vw;         /* ← 小卡寬度（手機，受限於螢幕寬度） */
+                margin: 0 2px;
+                padding: 8px 2px 8px 2px;
+            }
+            .ad-card img {
+                /* 小卡內圖片大小（手機版） */
+                width: 60px;        /* ← 圖片寬度（手機） */
+                height: 60px;       /* ← 圖片高度（手機） */
+                border-radius: 8px;
+                margin-bottom: 4px;
+            }
+            .container {
+                max-width: 100%;
+                min-width: 0;
+                margin: 12px 0;
+                padding: 16px 4px;
+                border-radius: 0;
+                box-shadow: none; /* ← 是的，這裡手機版 .container 沒有陰影 */
+            }
+            .form-group, label, input[type="text"], select, input[type="file"], .btn {
+                font-size: 16px;
+            }
+            .btn {
+                width: 100%;
+                padding: 12px 0;
+                font-size: 18px;
+            }
+            h1 {
+                font-size: 1.4em;
+            }
         }
     </style>
     <script>
@@ -83,77 +251,211 @@
             }
         }
         window.onload = toggleQuality;
+
+        // 廣告輪播資料
+        const adDataLeft = [
+      [
+        {img:'https://live.staticflickr.com/65535/54606029335_f4d9186d32_b.jpg', url:'https://www.instagram.com/creating_.for_.life/', text:'原創插畫T恤'},
+        {img:'https://live.staticflickr.com/65535/54605530231_3024c4019b_b.jpg', url:'https://www.instagram.com/creating_.for_.life/', text:'灰，黑，米，白'},
+        {img:'https://live.staticflickr.com/65535/54605773608_581c118706_b.jpg', url:'https://www.instagram.com/creating_.for_.life/', text:'四色可選'},
+        {img:'https://live.staticflickr.com/65535/54605797900_8f4ea97dba_b.jpg', url:'https://www.instagram.com/creating_.for_.life/', text:'隨心所欲'},
+      ],
+      [
+        {img:'https://live.staticflickr.com/65535/54606008995_bf02f21af4_b.jpg', url:'https://www.instagram.com/donoteat2024/', text:''},
+        {img:'https://live.staticflickr.com/65535/54604833677_66dddb57a2_b.jpg', url:'https://www.instagram.com/9899_club/', text:''},
+      ],
+      [
+        {img:'https://live.staticflickr.com/65535/54604833662_1c25afc921_b.jpg', url:'https://www.instagram.com/guagua.forest/', text:''},
+        {img:'https://live.staticflickr.com/65535/54605919188_03eaf06369_b.jpg', url:'https://www.instagram.com/orderzoos/', text:''}
+      ],
+    ];
+    // 右側廣告資料 adDataRight 未定義正確，需補上
+    const adDataRight = [
+         [
+        {img:'https://live.staticflickr.com/65535/54606008885_5114c93221_b.jpg', url:'https://www.instagram.com/shuyuflower/', text:''},
+        {img:'https://live.staticflickr.com/65535/54605707901_fb2c82505a_b.jpg', url:'https://www.instagram.com/moonheart726/', text:''}
+      ],
+      [
+        {img:'https://live.staticflickr.com/65535/54605904149_16282d9950_b.jpg', url:'https://www.instagram.com/zoedoit.macrame/', text:''},
+        {img:'https://live.staticflickr.com/65535/54606008990_7e56f48383_b.jpg', url:'https://www.instagram.com/chin.chin515/', text:''}
+      ],
+      [
+        {img:'https://live.staticflickr.com/65535/54606009000_d6716bbcac_b.jpg', url:'https://www.instagram.com/___orangeeee/', text:''},
+        {img:'https://live.staticflickr.com/65535/54605707826_322bf6d01c_b.jpg', url:'https://www.instagram.com/green_tea_is_me/', text:''}
+      ]
+    ];
+        // 輪播控制
+        function setupAdCarousel(adData, containerId) {
+            const container = document.getElementById(containerId);
+            let indices = [0, 0, 0];
+            function render() {
+                for (let i = 0; i < 3; i++) {
+                    const card = container.querySelector(`.ad-card[data-idx="${i}"]`);
+                    const imgData = adData[i][indices[i]];
+                    card.querySelector("img").src = imgData.img;
+                    card.querySelector("img").onclick = () => window.open(imgData.url, "_blank");
+                    // 指示點
+                    const indicators = card.querySelectorAll(".ad-card-indicator");
+                    indicators.forEach((el, idx) => {
+                        el.className = "ad-card-indicator" + (idx === indices[i] ? " active" : "");
+                    });
+                }
+            }
+            // 點擊指示點切換
+            for (let i = 0; i < 3; i++) {
+                const card = container.querySelector(`.ad-card[data-idx="${i}"]`);
+                const indicators = card.querySelectorAll(".ad-card-indicator");
+                indicators.forEach((el, idx) => {
+                    el.onclick = () => {
+                        indices[i] = idx;
+                        render();
+                    };
+                });
+            }
+            // 自動輪播
+            setInterval(() => {
+                for (let i = 0; i < 3; i++) {
+                    indices[i] = (indices[i] + 1) % adData[i].length;
+                }
+                render();
+            }, 4000);
+            render();
+        }
+        window.addEventListener("DOMContentLoaded", function() {
+            setupAdCarousel(adDataLeft, "ad-cards-left");
+            setupAdCarousel(adDataRight, "ad-cards-right");
+        });
     </script>
 </head>
 <body>
-    <div class="container">
-        <h1>YouTube 下載器</h1>
-        <form method="post" action="/download" enctype="multipart/form-data">
-            <div class="form-group autowrap50">
-                <label for="url">YouTube 連結：</label>
-                <input type="text" id="url" name="url" required>
+    <div class="main-flex">
+        <!-- 左側小卡區塊，增加 class="ad-side left" 以便單獨設置 margin -->
+        <div class="ad-side left" id="ad-cards-left">
+            <div class="ad-card left-1" data-idx="0">
+                <!-- 左1-1/1-2 -->
+                <img src="" alt="廣告1">
+                <div class="ad-card-indicators">
+                    <span class="ad-card-indicator"></span>
+                    <span class="ad-card-indicator"></span>
+                    <!-- 若有多於2張圖，這裡要有更多小點 -->
+                </div>
             </div>
-            <div class="form-group autowrap50">
-                <label>格式：</label>
-                <span class="radio-inline">
-                    <input type="radio" id="mp3" name="format" value="mp3" checked onclick="toggleQuality()">
-                    <label for="mp3" style="display:inline;margin-left:4px;">MP3</label>
-                </span>
-                <span class="radio-inline">
-                    <input type="radio" id="mp4" name="format" value="mp4" onclick="toggleQuality()">
-                    <label for="mp4" style="display:inline;margin-left:4px;">MP4</label>
-                </span>
+            <div class="ad-card left-2" data-idx="1">
+                <!-- 左2-1/2-2 -->
+                <img src="" alt="廣告2">
+                <div class="ad-card-indicators">
+                    <span class="ad-card-indicator"></span>
+                    <span class="ad-card-indicator"></span>
+                </div>
             </div>
-            <div class="form-group autowrap50" id="mp3-quality">
-                <label for="quality_mp3">MP3 品質：</label>
-                <select id="quality_mp3" name="quality_mp3">
-                    <option value="192">192 kbps</option>
-                    <option value="256">256 kbps</option>
-                    <option value="320">320 kbps</option>
-                </select>
+            <div class="ad-card left-3" data-idx="2">
+                <!-- 左3-1/3-2 -->
+                <img src="" alt="廣告3">
+                <div class="ad-card-indicators">
+                    <span class="ad-card-indicator"></span>
+                    <span class="ad-card-indicator"></span>
+                </div>
             </div>
-            <div class="form-group autowrap50" id="mp4-quality" style="display:none;">
-                <label for="quality_mp4">MP4 品質：</label>
-                <select id="quality_mp4" name="quality_mp4">
-                    <option value="480">480p</option>
-                    <option value="720">720p</option>
-                    <option value="1080">1080p</option>
-                </select>
-            </div>
-            <div class="form-group autowrap50">
-                <label for="cookiefile">（選用）上傳你的 YouTube cookies.txt：</label>
-                <input type="file" id="cookiefile" name="cookiefile" accept=".txt">
-            </div>
-            <button class="btn" type="submit">下載</button>
-        </form>
-        <div class="status autowrap50" id="status">
-            {% with messages = get_flashed_messages() %}
-              {% if messages %}
-                {% for message in messages %}
-                  <div style="color:#d46b08;">{{ message }}</div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
         </div>
-        <div class="notice autowrap50">
-            ※ 本服務僅支援無需登入的公開 YouTube 影片，遇到需驗證或私人影片將無法下載。
-            <br>※ 本服務不支援 Windows Media Player 播放下載的影片，建議使用 KMP、VLC、PotPlayer 等現代播放器。
-        </div>
-        <div class="warning autowrap50">
-            【免責聲明】本服務僅供個人學習與研究用途，請勿用於任何侵犯著作權或違法用途。使用本服務所產生之一切法律責任，均由使用者自行承擔。
-        </div>
-        <div class="disclaimer autowrap50">
-            <b>如何取得自己的 YouTube cookies.txt</b><br>
-1. 使用 Google Chrome 或 Edge 瀏覽器登入 YouTube。
-2. 安裝 <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank">Get cookies.txt LOCALLY</a> 擴充套件。
-3. 登入 YouTube 後，點擊瀏覽器右上角的 Get cookies.txt LOCALLY 圖示，
-選擇「YouTube」分頁，然後點擊「Export」或「下載」。
-4. 會下載一個 cookies.txt 檔案，請將此檔案提供給需要驗證的下載工具使用。
+        <div class="container">
+            <h1>YouTube 下載器</h1>
+            <form method="post" action="/download" enctype="multipart/form-data">
+                <div class="form-group autowrap50">
+                    <label for="url">YouTube 連結：</label>
+                    <input type="text" id="url" name="url" required>
+                </div>
+                <div class="form-group autowrap50">
+                    <label>格式：</label>
+                    <span class="radio-inline">
+                        <input type="radio" id="mp3" name="format" value="mp3" checked onclick="toggleQuality()">
+                        <label for="mp3" style="display:inline;margin-left:4px;">MP3</label>
+                    </span>
+                    <span class="radio-inline">
+                        <input type="radio" id="mp4" name="format" value="mp4" onclick="toggleQuality()">
+                        <label for="mp4" style="display:inline;margin-left:4px;">MP4</label>
+                    </span>
+                </div>
+                <div class="form-group autowrap50" id="mp3-quality">
+                    <label for="quality_mp3">MP3 品質：</label>
+                    <select id="quality_mp3" name="quality_mp3">
+                        <option value="192">192 kbps</option>
+                        <option value="256">256 kbps</option>
+                        <option value="320">320 kbps</option>
+                    </select>
+                </div>
+                <div class="form-group autowrap50" id="mp4-quality" style="display:none;">
+                    <label for="quality_mp4">MP4 品質：</label>
+                    <select id="quality_mp4" name="quality_mp4">
+                        <option value="480">480p</option>
+                        <option value="720">720p</option>
+                        <option value="1080">1080p</option>
+                    </select>
+                </div>
+                <div class="form-group autowrap50">
+                    <label for="cookiefile">（選用）上傳你的 YouTube cookies.txt：</label>
+                    <input type="file" id="cookiefile" name="cookiefile" accept=".txt">
+                </div>
+                <button class="btn" type="submit">下載</button>
+            </form>
+            <div class="status autowrap50" id="status">
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                    {% for message in messages %}
+                      <div style="color:#d46b08;">{{ message }}</div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+            </div>
+            <div class="notice autowrap50">
+                ※ 本服務僅支援無需登入的公開 YouTube 影片，遇到需驗證或私人影片將無法下載。
+                <br>※ 本服務不支援 Windows Media Player 播放下載的影片，建議使用 KMP、VLC、PotPlayer 等現代播放器。
+            </div>
+            <div class="warning autowrap50">
+                【免責聲明】本服務僅供個人學習與研究用途，請勿用於任何侵犯著作權或違法用途。使用本服務所產生之一切法律責任，均由使用者自行承擔。
+            </div>
+            <div class="disclaimer autowrap50">
+                <b>如何取得自己的 YouTube cookies.txt</b><br>
+    1. 使用 Google Chrome 或 Edge 瀏覽器登入 YouTube。
+    2. 安裝 <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank">Get cookies.txt LOCALLY</a> 擴充套件。
+    3. 登入 YouTube 後，點擊瀏覽器右上角的 Get cookies.txt LOCALLY 圖示，
+    選擇「YouTube」分頁，然後點擊「Export」或「下載」。
+    4. 會下載一個 cookies.txt 檔案，請將此檔案提供給需要驗證的下載工具使用。
 
-注意：請勿將 cookies.txt 提供給不信任的網站或他人，以免帳號被盜用。
-本程式於下載後會自動刪除 cookies 檔案，以確保您的使用安全。
+    注意：請勿將 cookies.txt 提供給不信任的網站或他人，以免帳號被盜用。
+    本程式於下載後會自動刪除 cookies 檔案，以確保您的使用安全。
+            </div>
+        </div>
+        <!-- 右側小卡區塊，增加 class="ad-side right" 以便單獨設置 margin -->
+        <div class="ad-side right" id="ad-cards-right">
+            <div class="ad-card right-1" data-idx="0">
+                <!-- 右1-1/1-2 -->
+                <img src="" alt="廣告4">
+                <div class="ad-card-indicators">
+                    <span class="ad-card-indicator"></span>
+                    <span class="ad-card-indicator"></span>
+                </div>
+            </div>
+            <div class="ad-card right-2" data-idx="1">
+                <!-- 右2-1/2-2 -->
+                <img src="" alt="廣告5">
+                <div class="ad-card-indicators">
+                    <span class="ad-card-indicator"></span>
+                    <span class="ad-card-indicator"></span>
+                </div>
+            </div>
+            <div class="ad-card right-3" data-idx="2">
+                <!-- 右3-1/3-2 -->
+                <img src="" alt="廣告6">
+                <div class="ad-card-indicators">
+                    <span class="ad-card-indicator"></span>
+                    <span class="ad-card-indicator"></span>
+                </div>
+            </div>
         </div>
     </div>
 </body>
 </html>
+</html>
+    </div>
+</body>
 </html>
